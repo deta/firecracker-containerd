@@ -631,6 +631,18 @@ func (s *service) mountDrives(requestCtx context.Context) error {
 	return nil
 }
 
+// inject drive mounts from config to request
+func (s *service) injectDriveMounts(req *proto.CreateVMRequest) {
+	for _, ad := range s.config.AdditionalDrives {
+		req.DriveMounts = append(req.DriveMounts, &proto.FirecrackerDriveMount{
+			HostPath:       ad.HostPath,
+			VMPath:         ad.VMPath,
+			FilesystemType: ad.FilesystemType,
+			IsWritable:     ad.IsWritable,
+		})
+	}
+}
+
 // StopVM will shutdown the VMM. Unlike Shutdown, this method is exposed to containerd clients.
 // If the VM has not been created yet and the timeout is hit waiting for it to exist, an error will be returned
 // but the shim will continue to shutdown. Similarly if we detect that the VM is in pause state, then
@@ -920,6 +932,8 @@ func (s *service) UpdateBalloonStats(requestCtx context.Context, req *proto.Upda
 }
 
 func (s *service) buildVMConfiguration(req *proto.CreateVMRequest) (*firecracker.Config, error) {
+	// inject additional drives in the request
+	s.injectDriveMounts(req)
 	for _, driveMount := range req.DriveMounts {
 		// Verify the request specified an absolute path for the source/dest of drives.
 		// Otherwise, users can implicitly rely on the CWD of this shim or agent.
@@ -1055,7 +1069,6 @@ func (s *service) buildRootDrive(req *proto.CreateVMRequest) []models.Drive {
 	} else {
 		builder = builder.WithRootDrive(s.config.RootDrive, firecracker.WithReadOnly(true))
 	}
-
 	return builder.Build()
 }
 

@@ -59,7 +59,18 @@ type Config struct {
 	ShimBaseDir  string       `json:"shim_base_dir"`
 	JailerConfig JailerConfig `json:"jailer"`
 
+	//AdditionalDrives xx
+	AdditionalDrives []*AdditionalDrive `json:"additional_drives"`
+
 	DebugHelper *debug.Helper `json:"-"`
+}
+
+// AdditionalDrive config
+type AdditionalDrive struct {
+	HostPath       string `json:"host_path"`
+	VMPath         string `json:"vm_path"`
+	FilesystemType string `json:"filesystem_type"`
+	IsWritable     bool   `json:"is_writable"`
 }
 
 // JailerConfig houses a set of configurable values for jailing
