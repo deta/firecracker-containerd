@@ -17,6 +17,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"path/filepath"
 	"math"
 	"net"
 	"os"
@@ -91,6 +92,10 @@ const (
 	// taskExecID is a special exec ID that is pointing its task itself.
 	// While the constant is defined here, the convention is coming from containerd.
 	taskExecID = ""
+
+	// VMConfigPathBaseEnvName is the name of the environment variable used
+	// to denote the base dir to load the config from
+	ConfigPathBaseEnvName = "FIRECRACKER_CONTAINERD_RUNTIME_CONFIG_PATH_BASE"
 )
 
 var (
@@ -453,6 +458,18 @@ func (s *service) waitVMReady() error {
 // received. Any subsequent requests will be ignored and get an AlreadyExists error response.
 func (s *service) CreateVM(requestCtx context.Context, request *proto.CreateVMRequest) (*proto.CreateVMResponse, error) {
 	defer logPanicAndDie(s.logger)
+
+	// load vm specific config on each create vm request
+	// only re-load config if no error and cfg not nil
+	// otherwise use default config
+	if cfg, err := config.LoadConfig(
+		filepath.Join(
+			os.Getenv(ConfigPathBaseEnvName),
+			fmt.Sprintf("%s.json", request.GetVMID()),
+		),
+	); err != nil && cfg != nil{
+		s.config = cfg
+	}
 
 	timeout := defaultCreateVMTimeout
 	if request.TimeoutSeconds > 0 {
