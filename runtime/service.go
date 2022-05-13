@@ -17,10 +17,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"path/filepath"
 	"math"
 	"net"
 	"os"
+	"path/filepath"
 	"runtime/debug"
 	"strconv"
 	"strings"
@@ -326,24 +326,30 @@ func (s *service) StartShim(shimCtx context.Context, opts shim.StartOpts) (strin
 	log := log.G(shimCtx).WithField("task_id", opts.ID)
 	log.Debug("StartShim")
 
-	// If we are running a shim start routine, we can safely assume our current working
-	// directory is the bundle directory
-	cwd, err := os.Getwd()
-	if err != nil {
-		return "", errors.Wrap(err, "failed to get current working directory")
-	}
-	bundleDir := bundle.Dir(cwd)
+	/*
+		// If we are running a shim start routine, we can safely assume our current working
+		// directory is the bundle directory
+		cwd, err := os.Getwd()
+		if err != nil {
+			return "", errors.Wrap(err, "failed to get current working directory")
+		}
+		bundleDir := bundle.Dir(cwd)
 
-	// Since we're running a shim start routine, we need to determine the vmID for the incoming
-	// container. Start by looking at the container's OCI annotations
-	s.vmID, err = bundleDir.OCIConfig().VMID()
-	if err != nil {
-		return "", err
-	}
+		// Since we're running a shim start routine, we need to determine the vmID for the incoming
+		// container. Start by looking at the container's OCI annotations
+
+		s.vmID, err = bundleDir.OCIConfig().VMID()
+		if err != nil {
+			return "", err
+		}
+	*/
 
 	var exitAfterAllTasksDeleted bool
 	containerCount := 0
 
+	// use task ID as the vm ID
+	// TODO: think about implications when task ID is the same
+	s.vmID = opts.ID
 	if s.vmID == "" {
 		// If here, no VMID has been provided by the client for this container, so auto-generate a new one.
 		// This results in a default behavior of running each container in its own VM if not otherwise
@@ -467,7 +473,7 @@ func (s *service) CreateVM(requestCtx context.Context, request *proto.CreateVMRe
 			os.Getenv(ConfigPathBaseEnvName),
 			fmt.Sprintf("%s.json", request.GetVMID()),
 		),
-	); err != nil && cfg != nil{
+	); err == nil && cfg != nil {
 		s.config = cfg
 	}
 
