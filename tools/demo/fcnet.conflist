@@ -10,7 +10,7 @@
         "subnet": "192.168.127.0/24",
         "resolvConf": "/etc/resolv.conf"
       },
-      "dns": {"nameservers": ["8.8.8.8"]},
+      "dns": {"nameservers": ["8.8.8.8"], ["8.8.4.4"]}
     },
     {
       "type": "firewall"
