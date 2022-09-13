@@ -27,7 +27,7 @@ import (
 )
 
 const (
-	defaultMemSizeMb = 128
+	defaultMemSizeMb = 1024
 	defaultCPUCount  = 1
 )
 
